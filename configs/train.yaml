@@ -4,7 +4,7 @@ defaults:
   - hydra: default
   - _self_
 
-exp_name: baseline_mlp
+exp_name: zs_model
 store_path: data/models/${exp_name}
 device: cpu
 seed: 42

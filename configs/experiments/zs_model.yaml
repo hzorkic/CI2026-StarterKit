@@ -3,7 +3,7 @@
 # @package _global_
 
 defaults:
-  - override /model: mlp
+  - override /model: cnn
 
-exp_name: zs_first
+exp_name: zs_exp
 learning_rate: 0.001

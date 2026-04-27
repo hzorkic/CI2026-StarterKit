@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /model: parametric
-
-exp_name: baseline_parametric
-learning_rate: 0.01

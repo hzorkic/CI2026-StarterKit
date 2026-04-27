@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - override /model: sundquist
-
-exp_name: baseline_sundquist
-learning_rate: 0.01

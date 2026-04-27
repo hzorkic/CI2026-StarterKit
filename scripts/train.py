@@ -142,7 +142,7 @@ def main(cfg: DictConfig) -> None:
 
     network = _build_network(cfg.network, device)
     train_loader, val_loader = _build_loaders(cfg.data)
-
+    
     model = hydra.utils.instantiate(
         cfg.model,
         network=network,

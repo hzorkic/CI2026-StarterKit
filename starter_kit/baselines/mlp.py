@@ -92,7 +92,7 @@ class MLPNetwork(torch.nn.Module):
         self.pool = nn.MaxPool2d(kernel_size, stride)
         self.fc1 = nn.Linear(input_dim * 8, input_dim * 4)
         self.fc2 = nn.Linear(input_dim * 4, input_dim * 2)
-        self.fc2 = nn.Linear(input_dim * 2, 1)
+        self.fc3 = nn.Linear(input_dim * 2, 1)
 
     
 
@@ -127,8 +127,9 @@ class MLPNetwork(torch.nn.Module):
         level_rh = estimate_relative_humidity(
             temperature=input_level[:, 0:1],
             specific_humidity=input_level[:, 1:2],
-            pressure=self.pressure_levels
+            pressure=torch.tensor([1000,  850,  700,  500,  250,  100,   50])
         )
+        print(level_rh.shape)
 
         # Concatenate the level and auxiliary fields
         input = torch.cat([
@@ -143,9 +144,6 @@ class MLPNetwork(torch.nn.Module):
 
         # Apply input normalisation
         input = self.normalisation(input)
-
-        # Apply the MLP
-        prediction = self.mlp(input)
 
         ## CNN
         x = self.pool(F.relu(self.conv1(input)))
@@ -188,6 +186,7 @@ class ZSModel(BaseModel):
             ``loss`` is the mean absolute error and ``prediction`` is the
             model output clamped to ``[0, 1]``.
         '''
+        print("IN MODEL")
         prediction = self.network(
             input_level=batch["input_level"],
             input_auxiliary=batch["input_auxiliary"]
