@@ -8,12 +8,15 @@ import logging
 from typing import Dict, Any
 
 # External modules
+from starter_kit.baselines.utils import estimate_relative_humidity
 import torch
 import torch.nn
 
 # Internal modules
 from starter_kit.model import BaseModel
 from starter_kit.layers import InputNormalisation
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 main_logger = logging.getLogger(__name__)
@@ -79,19 +82,19 @@ class MLPNetwork(torch.nn.Module):
             mean=torch.tensor(_normalisation_mean),
             std=torch.tensor(_normalisation_std)
         )
-        layers = [
-            torch.nn.Linear(input_dim, hidden_dim),
-            torch.nn.SiLU()
-        ]
-        for _ in range(n_layers-1):
-            layers.append(torch.nn.LayerNorm(hidden_dim))
-            layers.append(torch.nn.Linear(hidden_dim, hidden_dim))
-            layers.append(torch.nn.SiLU())
-        output_layer = torch.nn.Linear(hidden_dim, 1)
-        torch.nn.init.normal_(output_layer.weight, std=1E-6)
-        torch.nn.init.constant_(output_layer.bias, 0.5)
-        layers.append(output_layer)
-        self.mlp = torch.nn.Sequential(*layers)
+
+        ## CNN
+        kernel_size = 5
+        stride = 2
+        self.conv1 = nn.Conv2d(input_dim, input_dim * 2, kernel_size)
+        self.conv2 = nn.Conv2d(input_dim * 2, input_dim * 4, kernel_size)
+        self.conv3 = nn.Conv2d(input_dim * 4, input_dim * 8, kernel_size)
+        self.pool = nn.MaxPool2d(kernel_size, stride)
+        self.fc1 = nn.Linear(input_dim * 8, input_dim * 4)
+        self.fc2 = nn.Linear(input_dim * 4, input_dim * 2)
+        self.fc2 = nn.Linear(input_dim * 2, 1)
+
+    
 
     def forward(
             self,
@@ -121,27 +124,43 @@ class MLPNetwork(torch.nn.Module):
         # We only use the land sea mask and geopotential auxiliary fields
         sliced_auxiliary = input_auxiliary[:, :2]
 
+        level_rh = estimate_relative_humidity(
+            temperature=input_level[:, 0:1],
+            specific_humidity=input_level[:, 1:2],
+            pressure=self.pressure_levels
+        )
+
         # Concatenate the level and auxiliary fields
-        mlp_input = torch.cat([
+        input = torch.cat([
             flattened_input_level,
-            sliced_auxiliary
+            sliced_auxiliary,
+            level_rh
         ], dim=1)
 
+
         # Move the feature dimension to the end for normalisation and MLP
-        mlp_input = mlp_input.movedim(1, -1)
+        input = input.movedim(1, -1)
 
         # Apply input normalisation
-        mlp_input = self.normalisation(mlp_input)
+        input = self.normalisation(input)
 
         # Apply the MLP
-        prediction = self.mlp(mlp_input)
+        prediction = self.mlp(input)
+
+        ## CNN
+        x = self.pool(F.relu(self.conv1(input)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        prediction = self.fc3(x)
 
         # Move the channel dimension to the expected position
         prediction = prediction.movedim(-1, 1)
         return prediction
 
 
-class MLPModel(BaseModel):
+class ZSModel(BaseModel):
     r'''
     Model wrapper for an MLP network with standard loss outputs.
 

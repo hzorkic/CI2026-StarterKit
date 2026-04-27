@@ -4,7 +4,7 @@ defaults:
   - hydra: default
   - _self_
 
-exp_name: baseline_mlp
+exp_name: zs_first
 ckpt_path: data/models/${exp_name}/best_model.ckpt
 input_path: data/train_data/val_era5_region1.zarr
 output_path: data/forecasts/${exp_name}/forecast.nc

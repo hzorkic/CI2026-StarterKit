@@ -5,5 +5,5 @@
 defaults:
   - override /model: mlp
 
-exp_name: sz_model
+exp_name: zs_first
 learning_rate: 0.001
