@@ -139,7 +139,7 @@ can set up the environment manually as follows:
 
 6. Download the data from HuggingFace to `data/train_data` and unzip the zarr archives:
     ```bash
-    huggingface-cli download tobifinn/CI2026Hackathon \
+    hf download tobifinn/CI2026Hackathon \
         --repo-type dataset \
         --local-dir data/train_data
     find data/train_data -name "*.zip" -exec unzip -o {} -d data/train_data \; \
