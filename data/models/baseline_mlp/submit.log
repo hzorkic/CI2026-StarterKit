@@ -1,0 +1,2 @@
+[2026-04-27 15:07:41,814][forecast][INFO] - Predictions saved to data/forecasts/baseline_mlp/test_era5_region1.nc
+[2026-04-27 15:07:41,814][forecast][INFO] - Forecasting complete.
