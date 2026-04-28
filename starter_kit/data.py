@@ -183,7 +183,7 @@ class TestDataset(Dataset):
             var: _ensure_3d(self.datasets[var][idx].read().result())
             for var in self._VARS_TO_LOAD
         }
-        interm_dict['time'] = self.datasets.coords['time'][idx].values
+        # interm_dict['time'] = self.datasets.coords['time'][idx].values
         return interm_dict
 
     def __getitem__(self, idx: int) -> Dict[str, np.ndarray]:
