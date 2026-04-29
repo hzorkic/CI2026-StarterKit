@@ -118,8 +118,8 @@ _normalisation_std = [
     5.680168,
     2.978756,
     # land-sea mask, then surface geopotential
-    0.498762,
-    3602.712270,
+    # 0.498762,
+    # 3602.712270,
     # relative humidity
     0.000637,
     0.000847,
