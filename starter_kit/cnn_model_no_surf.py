@@ -73,8 +73,8 @@ _normalisation_mean = [
     0.281048,
     -0.094608,
     # land-sea mask, then surface geopotential
-    0.410844,
-    2129.684371,
+    # 0.410844,
+    # 2129.684371,
     # relative humidity
     0.001953,
     0.001983,
@@ -283,19 +283,17 @@ class MLPNetwork(nn.Module):
         # 3) Keep only the auxiliary fields used by this model: land-sea mask
         #    and surface geopotential. The remaining auxiliary channels (lat,
         #    lon, land-cover) are intentionally dropped.
-        sliced_auxiliary = input_auxiliary[:, :2]
+        # sliced_auxiliary = input_auxiliary[:, :2]
         # 4) Stack base atmospheric channels (28 + 2 = 30), then append RH (7)
         #    for the 37-channel input that matches the precomputed
         #    normalisation statistics.
-        base = torch.cat([flattened_input_level, sliced_auxiliary], dim=1)
-        cnn_input = torch.cat([base, level_rh], dim=1)
-
+        cnn_input = torch.cat([flattened_input_level, level_rh], dim=1)
+        
         # 5) Per-channel whitening so each variable enters the network with
         #    roughly zero mean and unit variance, regardless of its physical
         #    scale (T ~ 250 K vs q ~ 1e-3 kg/kg vs geopotential ~ 2000).
         cnn_input = self.normalisation(cnn_input)
 
-        # TODO: compute noramlize from relative humidity across the training set and apply it here instead of raw RH.
         # 6) Convolutional stack -> 1x1 head -> per-pixel prediction.
         return self.cnn(cnn_input)
 
