@@ -1,1 +1,2 @@
-[]
+- ckpt_path=data/models/zs_model/best_model.ckpt
+- batch_size=8

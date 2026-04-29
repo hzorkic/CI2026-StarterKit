@@ -12,15 +12,12 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='ci_2026_starter_kit',
+    name="ci_2026_starter_kit",
     packages=find_packages(
-        include=[
-            'starter_kit', 'internal',
-            'data_preparation',
-        ]
+        include=["starter_kit", "internal", "data_preparation", "data"]
     ),
-    version='0.1',
-    description='The starter kit for the CI 2026 hackathon',
-    author='Tobias S. Finn',
-    license='MIT',
+    version="0.1",
+    description="The starter kit for the CI 2026 hackathon",
+    author="Tobias S. Finn",
+    license="MIT",
 )

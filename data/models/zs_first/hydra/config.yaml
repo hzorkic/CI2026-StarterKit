@@ -18,24 +18,8 @@ network:
   hidden_dim: 256
   n_layers: 4
 exp_name: zs_first
-ckpt_path: data/models/${exp_name}/best_model.ckpt
+ckpt_path: data/models/zs_model/best_model.ckpt
 input_path: data/train_data/val_era5_region1.zarr
 output_path: data/forecasts/${exp_name}/forecast.nc
 device: cpu
-batch_size: 32
-skip_forecast: false
-email: sarah.kunkel@rwe.com
-url_portal: https://submission-7rre8iitk.brevlab.com
-regions:
-  era5_region1:
-    input_path: data/train_data/test_in_era5_region1.zarr
-    output_path: data/forecasts/${exp_name}/test_era5_region1.nc
-  era5_region2:
-    input_path: data/train_data/test_in_era5_region2.zarr
-    output_path: data/forecasts/${exp_name}/test_era5_region2.nc
-  aimip_region1:
-    input_path: data/train_data/test_in_aimip_region1.zarr
-    output_path: data/forecasts/${exp_name}/test_aimip_region1.nc
-  aimip_region2:
-    input_path: data/train_data/test_in_aimip_region2.zarr
-    output_path: data/forecasts/${exp_name}/test_aimip_region2.nc
+batch_size: 8

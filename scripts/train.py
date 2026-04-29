@@ -84,6 +84,39 @@ def _build_network(
     return network.to(device)
 
 
+def _check_zarr_path(path: str, name: str) -> None:
+    r'''
+    Fail fast with an actionable message when a zarr path is missing or zipped.
+
+    xarray reports a misleading ``FileNotFoundError`` for any non-zarr directory,
+    so we surface the common causes (zip not extracted, parent directory passed
+    by mistake, dataset not downloaded) directly.
+    '''
+    if not os.path.isdir(path):
+        zip_path = path + ".zip"
+        if os.path.exists(zip_path):
+            raise FileNotFoundError(
+                f"{name}={path} is missing, but {zip_path} exists. "
+                f"Unzip it: unzip {zip_path} -d {os.path.dirname(path) or '.'}"
+            )
+        raise FileNotFoundError(
+            f"{name}={path} not found. Download and unzip the dataset:\n"
+            "  hf download tobifinn/CI2026Hackathon "
+            "--repo-type dataset --local-dir data/train_data\n"
+            "  find data/train_data -name '*.zip' -exec unzip -o {} "
+            "-d data/train_data \\; -exec rm {} \\;"
+        )
+    if not any(
+        os.path.exists(os.path.join(path, marker))
+        for marker in (".zgroup", ".zmetadata", ".zarray")
+    ):
+        raise FileNotFoundError(
+            f"{name}={path} is a directory but not a zarr archive "
+            f"(no .zgroup/.zmetadata/.zarray). Did you point at the parent "
+            f"directory instead of the .zarr archive itself?"
+        )
+
+
 def _build_loaders(
         cfg: DictConfig
 ) -> Tuple[DataLoader, DataLoader]:
@@ -100,6 +133,8 @@ def _build_loaders(
     Tuple[DataLoader, DataLoader]
         Training loader and validation loader.
     '''
+    _check_zarr_path(cfg.train_path, "train_path")
+    _check_zarr_path(cfg.val_path, "val_path")
     train_ds = TrainDataset(
         cfg.train_path,
         threads_limit=cfg.threads_limit,

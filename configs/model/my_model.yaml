@@ -1,0 +1,15 @@
+# @package _global_
+
+model:
+  _target_: starter_kit.my_model.MLPModel
+  n_epochs: ${n_epochs}
+  learning_rate: ${learning_rate}
+  weight_decay: 0.0
+  best_threshold: 0.99
+  log_csv: true
+
+network:
+  _target_: starter_kit.my_model.MLPNetwork
+  input_dim: 30
+  hidden_dim: 256
+  n_layers: 4

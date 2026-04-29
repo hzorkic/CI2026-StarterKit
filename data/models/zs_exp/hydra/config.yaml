@@ -6,21 +6,36 @@ data:
   threads_limit: shared
   pin_memory: true
 model:
-  _target_: data.models.cnn_model.ZSModel
+  _target_: starter_kit.cnn_model.ZSModel
   n_epochs: ${n_epochs}
   learning_rate: ${learning_rate}
   weight_decay: 0.0
   best_threshold: 0.99
   log_csv: true
 network:
-  _target_: data.models.cnn_model.MLPNetwork
+  _target_: starter_kit.cnn_model.MLPNetwork
   input_dim: 30
   hidden_dim: 256
   n_layers: 4
 exp_name: zs_exp
-store_path: data/models/${exp_name}
-device: cuda
-seed: 42
-n_epochs: 10
+ckpt_path: data/models/${exp_name}/best_model.ckpt
+input_path: data/train_data/val_era5_region1.zarr
+output_path: data/forecasts/${exp_name}/forecast.nc
+device: cpu
 batch_size: 32
-learning_rate: 0.001
+skip_forecast: false
+email: zora.zorkic@rwe.com
+url_portal: https://submission-7rre8iitk.brevlab.com
+regions:
+  era5_region1:
+    input_path: data/train_data/test_in_era5_region1.zarr
+    output_path: data/forecasts/${exp_name}/test_era5_region1.nc
+  era5_region2:
+    input_path: data/train_data/test_in_era5_region2.zarr
+    output_path: data/forecasts/${exp_name}/test_era5_region2.nc
+  aimip_region1:
+    input_path: data/train_data/test_in_aimip_region1.zarr
+    output_path: data/forecasts/${exp_name}/test_aimip_region1.nc
+  aimip_region2:
+    input_path: data/train_data/test_in_aimip_region2.zarr
+    output_path: data/forecasts/${exp_name}/test_aimip_region2.nc

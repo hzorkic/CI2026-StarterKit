@@ -22,40 +22,33 @@ class ParametricNetwork(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.register_parameter(
-            "level_logscale",
-            torch.nn.Parameter(torch.full((7, 1, 1), 10.).log())
+            "level_logscale", torch.nn.Parameter(torch.full((7, 1, 1), 10.0).log())
         )
         self.register_parameter(
-            "level_logshift",
-            torch.nn.Parameter(torch.full((7, 1, 1), 0.7).log())
+            "level_logshift", torch.nn.Parameter(torch.full((7, 1, 1), 0.7).log())
         )
         self.register_buffer(
             "pressure_levels",
             torch.tensor(
                 [1000_00, 850_00, 700_00, 500_00, 250_00, 100_00, 50_00]
-            ).reshape(-1, 1, 1)
+            ).reshape(-1, 1, 1),
         )
 
     def forward(
-            self,
-            input_level: torch.Tensor,
-            input_auxiliary: torch.Tensor
+        self, input_level: torch.Tensor, input_auxiliary: torch.Tensor
     ) -> torch.Tensor:
         # Cloud cover at levels
         level_rh = estimate_relative_humidity(
             temperature=input_level[:, 0:1],
             specific_humidity=input_level[:, 1:2],
-            pressure=self.pressure_levels
+            pressure=self.pressure_levels,
         )
         level_cloud_cover = torch.sigmoid(
-            (level_rh - self.level_logshift.exp())
-            * self.level_logscale.exp()
+            (level_rh - self.level_logshift.exp()) * self.level_logscale.exp()
         )
 
         # Mask where pressure is lower than surface pressure
-        surface_pressure = approximate_surface_pressure(
-            input_auxiliary[:, 1:2]
-        )
+        surface_pressure = approximate_surface_pressure(input_auxiliary[:, 1:2])
         valid_mask = self.pressure_levels < surface_pressure.unsqueeze(2)
 
         # Randomly distributed cloud cover
@@ -65,22 +58,16 @@ class ParametricNetwork(torch.nn.Module):
 
 
 class ParametricModel(BaseModel):
-    def estimate_loss(
-            self,
-            batch: Dict[str, torch.Tensor]
-    ) -> Dict[str, Any]:
+    def estimate_loss(self, batch: Dict[str, torch.Tensor]) -> Dict[str, Any]:
         prediction = self.network(
-            input_level=batch["input_level"],
-            input_auxiliary=batch["input_auxiliary"]
+            input_level=batch["input_level"], input_auxiliary=batch["input_auxiliary"]
         )
         loss = (prediction - batch["target"]).pow(2)
         loss = (loss * self.lat_weights).mean()
         return {"loss": loss, "prediction": prediction}
 
     def estimate_auxiliary_loss(
-            self,
-            batch: Dict[str, torch.Tensor],
-            outputs: Dict[str, Any]
+        self, batch: Dict[str, torch.Tensor], outputs: Dict[str, Any]
     ) -> Dict[str, Any]:
         mae = (outputs["prediction"] - batch["target"]).abs()
         mae = (mae * self.lat_weights).mean()

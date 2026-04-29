@@ -1,2 +1,0 @@
-- +experiments=baseline_mlp
-- device=cuda

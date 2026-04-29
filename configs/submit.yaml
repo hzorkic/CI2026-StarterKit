@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 skip_forecast: false
-email: sarah.kunkel@rwe.com
+email: zora.zorkic@rwe.com
 url_portal: "https://submission-7rre8iitk.brevlab.com"
 
 # Per-region input/output paths, keyed by suite then region.

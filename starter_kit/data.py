@@ -5,14 +5,14 @@
 
 # System modules
 import logging
-from typing import Dict, Union, Optional, Callable
+from typing import Callable, Dict, Optional, Union
+
+import numpy as np
+import tensorstore as ts
+import xarray as xr
 
 # External modules
 from torch.utils.data import Dataset
-
-import numpy as np
-import xarray as xr
-import tensorstore as ts
 
 # Internal modules
 
@@ -21,7 +21,7 @@ main_logger = logging.getLogger(__name__)
 
 
 def _ensure_3d(arr: np.ndarray) -> np.ndarray:
-    r'''
+    r"""
     Ensure that the input array has three spatial dimensions (C, H, W).
 
     If the input array has only two spatial dimensions (H, W), a channel
@@ -36,7 +36,7 @@ def _ensure_3d(arr: np.ndarray) -> np.ndarray:
     -------
     np.ndarray
         Output array of shape (C, H, W).
-    '''
+    """
     if arr.ndim < 3:
         n_missing = 3 - arr.ndim
         new_shape = (1,) * n_missing + arr.shape
@@ -46,25 +46,25 @@ def _ensure_3d(arr: np.ndarray) -> np.ndarray:
 
 
 class TestDataset(Dataset):
-    r'''
+    r"""
     Dataset for loading zarr-backed input variables and auxiliary data.
 
     This dataset reads time-indexed fields from a zarr archive and stores
     auxiliary variables in memory. It supports optional data augmentation on
     each item.
-    '''
+    """
 
     _VARS_TO_LOAD = ["input_level"]
     _input_auxiliary: np.ndarray
     _n_time: int
 
     def __init__(
-            self,
-            data_path: str,
-            threads_limit: Union[str, int] = "shared",
-            augmentation: Optional[Callable] = None,
+        self,
+        data_path: str,
+        threads_limit: Union[str, int] = "shared",
+        augmentation: Optional[Callable] = None,
     ) -> None:
-        r'''
+        r"""
         Initialize the dataset.
 
         Parameters
@@ -76,7 +76,7 @@ class TestDataset(Dataset):
             operations, by default "shared".
         augmentation : Callable, optional
             Optional callable applied to each returned example.
-        '''
+        """
         self._datasets = {}
         self.data_path = data_path
         self.threads_limit = threads_limit
@@ -86,20 +86,20 @@ class TestDataset(Dataset):
 
     @property
     def datasets(self) -> Dict[str, ts.TensorStore]:
-        r'''
+        r"""
         Return the opened tensorstore datasets.
 
         Returns
         -------
         Dict[str, ts.TensorStore]
             Mapping from variable name to the opened tensorstore array.
-        '''
+        """
         if not self._datasets:
             self._datasets = self._setup_datasets()
         return self._datasets
 
     def _setup_datasets(self) -> Dict[str, ts.TensorStore]:
-        r'''
+        r"""
         Load the tensorstore datasets per variable.
 
         Opens one tensorstore array per variable under ``data_path``, sharing a
@@ -116,57 +116,58 @@ class TestDataset(Dataset):
         Dict[str, Any]
             Mapping from variable name to the opened tensorstore
             array.
-        '''
-        context = ts.Context({
-            'file_io_concurrency': {'limit': self.threads_limit},
-            'data_copy_concurrency': {'limit': self.threads_limit},
-        })
+        """
+        context = ts.Context(
+            {
+                "file_io_concurrency": {"limit": self.threads_limit},
+                "data_copy_concurrency": {"limit": self.threads_limit},
+            }
+        )
         futures = {
             name: ts.open(
                 {
-                    'driver': 'zarr',
-                    'metadata_key': '.zarray',
-                    'kvstore': {
-                        'driver': 'file',
-                        'path': f'{self.data_path}/{name}',
+                    "driver": "zarr",
+                    "metadata_key": ".zarray",
+                    "kvstore": {
+                        "driver": "file",
+                        "path": f"{self.data_path}/{name}",
                     },
                 },
                 context=context,
             )
             for name in self._VARS_TO_LOAD
         }
-        return {
-            name: future.result()
-            for name, future in futures.items()
-        }
+        return {name: future.result() for name, future in futures.items()}
 
     def _load_metadata(self) -> None:
-        r'''
+        r"""
         Load auxiliary metadata from the zarr dataset.
 
         Reads the in-memory auxiliary field and the length of the time
         dimension.
-        '''
+        """
         with xr.open_zarr(self.data_path) as ds:
-            self._input_auxiliary = ds['input_auxiliary'].values
+            self._input_auxiliary = ds["input_auxiliary"].values
             try:
-                self._n_time = ds.sizes['time']
+                self._n_time = ds.sizes["time"]
+                self._time = ds["time"].values.astype("datetime64[s]")
             except KeyError:
                 self._n_time = ds.sizes["sample"]
+                self._time = None
 
     def __len__(self) -> int:
-        r'''
+        r"""
         Return the number of time samples in the dataset.
 
         Returns
         -------
         int
             Number of time steps available in the dataset.
-        '''
+        """
         return self._n_time
 
     def _get_data(self, idx: int) -> Dict[str, np.ndarray]:
-        r'''
+        r"""
         Read data for a single time index from opened datasets.
 
         Parameters
@@ -178,16 +179,15 @@ class TestDataset(Dataset):
         -------
         Dict[str, np.ndarray]
             Mapping from variable name to the loaded array for the given index.
-        '''
+        """
         interm_dict = {
             var: _ensure_3d(self.datasets[var][idx].read().result())
             for var in self._VARS_TO_LOAD
         }
-        # interm_dict['time'] = self.datasets.coords['time'][idx].values
         return interm_dict
 
     def __getitem__(self, idx: int) -> Dict[str, np.ndarray]:
-        r'''
+        r"""
         Retrieve a dataset item by index.
 
         Parameters
@@ -199,17 +199,19 @@ class TestDataset(Dataset):
         -------
         Dict[str, np.ndarray]
             Dictionary containing input fields and auxiliary data.
-        '''
+        """
         loaded_data = self._get_data(idx)
-        loaded_data['input_auxiliary'] = _ensure_3d(self._input_auxiliary)
+        loaded_data["input_auxiliary"] = _ensure_3d(self._input_auxiliary)
+        if self._time is not None:
+            loaded_data["time"] = np.datetime_as_string(self._time[idx], unit="s")
         if self.augmentation is not None:
             loaded_data = self.augmentation(loaded_data)
         return loaded_data
 
 
 class TrainDataset(TestDataset):
-    r'''
+    r"""
     Training dataset that includes the target variable.
-    '''
+    """
 
     _VARS_TO_LOAD = ["input_level", "target"]

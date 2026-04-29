@@ -1,0 +1,20 @@
+[2026-04-29 13:08:39,818][forecast][INFO] - Predictions saved to data/forecasts/zs_exp/test_era5_region1.nc
+[2026-04-29 13:08:39,818][forecast][INFO] - Forecasting complete.
+[2026-04-29 13:09:34,497][forecast][INFO] - Predictions saved to data/forecasts/zs_exp/test_era5_region2.nc
+[2026-04-29 13:09:34,498][forecast][INFO] - Forecasting complete.
+[2026-04-29 13:10:28,980][forecast][INFO] - Predictions saved to data/forecasts/zs_exp/test_aimip_region1.nc
+[2026-04-29 13:10:28,980][forecast][INFO] - Forecasting complete.
+[2026-04-29 13:11:24,408][forecast][INFO] - Predictions saved to data/forecasts/zs_exp/test_aimip_region2.nc
+[2026-04-29 13:11:24,408][forecast][INFO] - Forecasting complete.
+[2026-04-29 13:11:24,410][__main__][INFO] -   era5_region1: data/forecasts/zs_exp/test_era5_region1.nc
+[2026-04-29 13:11:24,410][__main__][INFO] -   era5_region2: data/forecasts/zs_exp/test_era5_region2.nc
+[2026-04-29 13:11:24,410][__main__][INFO] -   aimip_region1: data/forecasts/zs_exp/test_aimip_region1.nc
+[2026-04-29 13:11:24,410][__main__][INFO] -   aimip_region2: data/forecasts/zs_exp/test_aimip_region2.nc
+[2026-04-29 13:11:24,411][__main__][INFO] - Submitting to https://submission-7rre8iitk.brevlab.com/api/v1/submissions …
+[2026-04-29 13:12:34,367][__main__][INFO] - Submission accepted.
+[2026-04-29 13:12:34,367][__main__][INFO] -   unique_idx : 00000147
+[2026-04-29 13:12:34,368][__main__][INFO] -   status     : queued
+[2026-04-29 13:12:34,368][__main__][INFO] -   queue pos  : 1
+[2026-04-29 13:12:34,368][__main__][INFO] -   est. wait  : 0s
+[2026-04-29 13:12:34,368][__main__][INFO] - Check status with:
+  curl -s https://submission-7rre8iitk.brevlab.com/api/v1/submissions/00000147 | python -m json.tool
